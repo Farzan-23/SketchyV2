@@ -49,14 +49,22 @@ def get_db():
 
 
 def init_db():
-    """Create users table if it doesn't exist."""
+    """
+    Create users table if it doesn't exist.
+    Columns:
+        id            INTEGER PRIMARY KEY
+        username      TEXT UNIQUE
+        password_hash TEXT
+        is_suspended  0 / 1
+    """
     conn = get_db()
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL
+            password_hash TEXT NOT NULL,
+            is_suspended INTEGER NOT NULL DEFAULT 0
         );
         """
     )
@@ -64,12 +72,12 @@ def init_db():
     conn.close()
 
 
-# Initialize DB at startup
+# Run table creation on startup
 init_db()
 
 
 # ---------------------------------------------------------------------
-# Utility helpers
+# Utility helpers & decorators
 # ---------------------------------------------------------------------
 def allowed_file(filename: str, allowed_exts) -> bool:
     return "." in filename and filename.rsplit(".", 1)[1].lower() in allowed_exts
@@ -77,7 +85,7 @@ def allowed_file(filename: str, allowed_exts) -> bool:
 
 def login_required(view_func):
     """
-    Decorator to protect routes. If not logged in, redirect to /login.
+    Require a logged-in user.
     """
     @wraps(view_func)
     def wrapped_view(*args, **kwargs):
@@ -87,13 +95,29 @@ def login_required(view_func):
     return wrapped_view
 
 
+def admin_required(view_func):
+    """
+    Only allow access if the logged-in user is 'admin'.
+    """
+    @wraps(view_func)
+    def wrapped_view(*args, **kwargs):
+        if not session.get("user_id"):
+            return redirect(url_for("login"))
+        if session.get("username") != "admin":
+            flash("Admin access required to view this page.", "warning")
+            return redirect(url_for("index"))
+        return view_func(*args, **kwargs)
+    return wrapped_view
+
+
 # ---------------------------------------------------------------------
-# Auth routes: register, login, logout
+# Auth routes
 # ---------------------------------------------------------------------
 @app.route("/register", methods=["GET", "POST"])
 def register():
     """
-    Allow new users to create an account.
+    Public registration for new users.
+    The first time you run the app you should create the 'admin' user here.
     """
     if request.method == "POST":
         username = request.form.get("username", "").strip()
@@ -108,7 +132,6 @@ def register():
             flash("Passwords do not match.", "warning")
             return redirect(url_for("register"))
 
-        # Basic length check
         if len(username) < 3:
             flash("Username must be at least 3 characters.", "warning")
             return redirect(url_for("register"))
@@ -142,6 +165,7 @@ def register():
 def login():
     """
     Log a user in using username/password from the SQLite DB.
+    Suspended users cannot log in.
     """
     if request.method == "POST":
         username = request.form.get("username", "").strip()
@@ -154,7 +178,15 @@ def login():
         ).fetchone()
         conn.close()
 
-        if user and check_password_hash(user["password_hash"], password):
+        if not user:
+            flash("Invalid username or password.", "danger")
+            return redirect(url_for("login"))
+
+        if user["is_suspended"]:
+            flash("This account is suspended. Please contact the administrator.", "danger")
+            return redirect(url_for("login"))
+
+        if check_password_hash(user["password_hash"], password):
             session["user_id"] = user["id"]
             session["username"] = user["username"]
             flash("Logged in successfully.", "success")
@@ -177,15 +209,171 @@ def logout():
 
 
 # ---------------------------------------------------------------------
+# Admin routes: list, edit, suspend, delete
+# ---------------------------------------------------------------------
+@app.route("/admin/users")
+@admin_required
+def manage_users():
+    """
+    Admin panel: list all users.
+    """
+    conn = get_db()
+    users = conn.execute(
+        "SELECT id, username, is_suspended FROM users ORDER BY username"
+    ).fetchall()
+    conn.close()
+    return render_template("admin_users.html", users=users)
+
+
+@app.route("/admin/users/<int:user_id>/edit", methods=["GET", "POST"])
+@admin_required
+def edit_user(user_id):
+    """
+    Edit another user's username and/or reset password.
+    Admin cannot change their own username here to avoid locking themselves out.
+    """
+    conn = get_db()
+    user = conn.execute(
+        "SELECT id, username, is_suspended FROM users WHERE id = ?",
+        (user_id,),
+    ).fetchone()
+
+    if not user:
+        conn.close()
+        flash("User not found.", "warning")
+        return redirect(url_for("manage_users"))
+
+    if request.method == "POST":
+        new_username = request.form.get("username", "").strip()
+        new_password = request.form.get("password", "").strip()
+        confirm = request.form.get("confirm_password", "").strip()
+
+        if not new_username:
+            flash("Username cannot be empty.", "warning")
+            return redirect(url_for("edit_user", user_id=user_id))
+
+        # Prevent changing username of admin to something else
+        if user["username"] == "admin" and new_username != "admin":
+            flash("You cannot change the username of the admin account.", "warning")
+            return redirect(url_for("edit_user", user_id=user_id))
+
+        # Check for username conflict with others
+        existing = conn.execute(
+            "SELECT id FROM users WHERE username = ? AND id != ?",
+            (new_username, user_id),
+        ).fetchone()
+        if existing:
+            flash("That username is already in use by another account.", "warning")
+            return redirect(url_for("edit_user", user_id=user_id))
+
+        # Update username
+        conn.execute(
+            "UPDATE users SET username = ? WHERE id = ?",
+            (new_username, user_id),
+        )
+
+        # Optional password reset
+        if new_password or confirm:
+            if new_password != confirm:
+                flash("New password and confirmation do not match.", "warning")
+                conn.commit()
+                conn.close()
+                return redirect(url_for("edit_user", user_id=user_id))
+
+            new_hash = generate_password_hash(new_password)
+            conn.execute(
+                "UPDATE users SET password_hash = ? WHERE id = ?",
+                (new_hash, user_id),
+            )
+
+        conn.commit()
+        conn.close()
+
+        flash("User details updated.", "success")
+        return redirect(url_for("manage_users"))
+
+    conn.close()
+    return render_template("admin_edit_user.html", user=user)
+
+
+@app.post("/admin/users/<int:user_id>/toggle-suspend")
+@admin_required
+def toggle_suspend_user(user_id):
+    """
+    Toggle suspension status for a user.
+    """
+    conn = get_db()
+    user = conn.execute(
+        "SELECT id, username, is_suspended FROM users WHERE id = ?",
+        (user_id,),
+    ).fetchone()
+
+    if not user:
+        conn.close()
+        flash("User not found.", "warning")
+        return redirect(url_for("manage_users"))
+
+    # Optional: prevent suspending yourself (admin)
+    if user_id == session.get("user_id"):
+        conn.close()
+        flash("You cannot suspend your own account while logged in.", "warning")
+        return redirect(url_for("manage_users"))
+
+    new_status = 0 if user["is_suspended"] else 1
+    conn.execute(
+        "UPDATE users SET is_suspended = ? WHERE id = ?",
+        (new_status, user_id),
+    )
+    conn.commit()
+    conn.close()
+
+    if new_status:
+        flash(f"User '{user['username']}' has been suspended.", "info")
+    else:
+        flash(f"User '{user['username']}' has been reactivated.", "success")
+
+    return redirect(url_for("manage_users"))
+
+
+@app.post("/admin/users/<int:user_id>/delete")
+@admin_required
+def delete_user(user_id):
+    """
+    Delete a user account. Cannot delete currently logged-in admin.
+    """
+    current_id = session.get("user_id")
+    conn = get_db()
+    user = conn.execute(
+        "SELECT id, username FROM users WHERE id = ?",
+        (user_id,),
+    ).fetchone()
+
+    if not user:
+        conn.close()
+        flash("User not found.", "warning")
+        return redirect(url_for("manage_users"))
+
+    if user_id == current_id:
+        conn.close()
+        flash("You cannot delete the account you are logged in with.", "warning")
+        return redirect(url_for("manage_users"))
+
+    conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+
+    flash(f"User '{user['username']}' has been deleted.", "success")
+    return redirect(url_for("manage_users"))
+
+
+# ---------------------------------------------------------------------
 # Core UI routes (protected)
 # ---------------------------------------------------------------------
 @app.route("/")
 @login_required
 def index():
     """
-    Main dashboard:
-    - Step 1: upload sketch/photo as query face
-    - Step 2: upload CCTV/video to scan for that face
+    Main dashboard.
     """
     return render_template("index.html")
 
@@ -195,8 +383,7 @@ def index():
 def search_image():
     """
     Handles sketch/photo upload.
-    For now: returns DUMMY results to show how UI looks.
-    Later: plug in actual facial recognition backend here.
+    For now: returns DUMMY results.
     """
     file = request.files.get("query_image")
 
@@ -212,7 +399,6 @@ def search_image():
     save_path = os.path.join(IMAGE_UPLOAD_DIR, filename)
     file.save(save_path)
 
-    # TODO: replace with real backend call using `save_path` as query image
     dummy_results = [
         {"label": "Person_A", "score": 0.23, "source": "suspect_ali_1.jpg"},
         {"label": "Person_B", "score": 0.41, "source": "suspect_maria_2.png"},
@@ -234,7 +420,6 @@ def search_video():
     """
     Handles CCTV/video upload.
     For now: returns DUMMY match timeline.
-    Later: plug in actual frame-by-frame analysis using the query face.
     """
     file = request.files.get("video_file")
 
@@ -250,7 +435,6 @@ def search_video():
     save_path = os.path.join(VIDEO_UPLOAD_DIR, filename)
     file.save(save_path)
 
-    # TODO: replace with real backend call using `save_path`
     dummy_matches = [
         {"time": "00:05", "label": "Person_A", "score": 0.27},
         {"time": "00:23", "label": "Person_B", "score": 0.35},
@@ -268,5 +452,4 @@ def search_video():
 # Entry point
 # ---------------------------------------------------------------------
 if __name__ == "__main__":
-    # Local development server.
     app.run(host="0.0.0.0", port=5000, debug=True)

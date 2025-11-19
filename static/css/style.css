@@ -1,52 +1,80 @@
+/* ===============================
+   SKETCHY – FOREST GREEN THEME
+   =============================== */
+
+:root {
+    --forest-green: #0b3d2e;
+    --sea-green: #0f5f4a;
+    --mint-green: #78c2a4;
+    --light-mint: #a4e8c5;
+    --white: #ffffff;
+}
+
+/* Background */
 body.sketchy-bg {
-    background: radial-gradient(circle at top left, #1f2937, #020617 55%);
-    color: #0f172a;
+    background: linear-gradient(135deg, #0b3d2e, #0f5f4a);
+    color: var(--white);
 }
 
+/* Navbar */
 .sketchy-navbar {
-    background: linear-gradient(90deg, #111827, #1f2937);
+    background: var(--forest-green) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
 }
 
+/* Footer */
 .sketchy-footer {
-    background-color: #020617;
-    color: #9ca3af;
+    background: var(--forest-green);
+    color: rgba(255,255,255,0.7);
 }
 
+/* Cards */
 .sketchy-card {
-    border-radius: 0.9rem;
-    border: none;
-    background-color: #ffffff;
+    background: var(--sea-green);
+    color: var(--white);
+    border-radius: 14px;
+    border: 1px solid rgba(255,255,255,0.08);
+    transition: 0.25s ease-in-out;
 }
 
-.sketchy-card .card-header {
-    border-bottom: 1px solid #e5e7eb;
-    background-color: #f9fafb;
-    font-weight: 600;
+.sketchy-card:hover {
+    border-color: var(--mint-green);
+    transform: translateY(-2px);
 }
 
+/* Hero block */
 .sketchy-hero {
-    background: linear-gradient(135deg, #111827, #2563eb);
-    color: #e5e7eb;
+    background: linear-gradient(135deg, #0b3d2e, #119072);
+    color: #e5f7f0;
 }
 
 .sketchy-hero p {
-    color: #d1d5db;
+    color: #d0f0e4;
 }
 
-.navbar-brand span {
-    font-weight: 600;
-    letter-spacing: 0.04em;
-}
-
-.footer {
-    font-size: 0.8rem;
-}
-
+/* Buttons */
 .btn-primary,
 .btn-success {
-    border-radius: 999px;
+    background: var(--mint-green) !important;
+    border: none;
+    color: var(--forest-green) !important;
 }
 
-.form-control {
-    border-radius: 0.6rem;
+.btn-primary:hover,
+.btn-success:hover {
+    background: var(--light-mint) !important;
+    transform: scale(1.02);
+}
+
+/* File input */
+input[type="file"] {
+    background: rgba(255,255,255,0.9);
+    border-radius: 6px;
+    padding: 6px;
+}
+
+/* Alerts */
+.alert {
+    border-radius: 10px;
+    opacity: 0.96;
 }

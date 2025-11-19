@@ -8,9 +8,8 @@
             Photo Database Search – Results (Demo)
         </h3>
         <p class="text-muted">
-            Sketchy has taken your uploaded <strong>sketch/photo</strong> as the
-            query face and is displaying simulated matches from a reference
-            <strong>photo database</strong>.
+            Sketchy has taken your uploaded <strong>sketch/photo</strong> as the query face
+            and is showing simulated matches from a reference <strong>photo database</strong>.
         </p>
     </div>
 </div>
@@ -19,7 +18,7 @@
     <div class="col-md-4 mb-3 mb-md-0">
         <div class="card shadow-sm sketchy-card">
             <div class="card-header">
-                Query Face (Sketch / Photo)
+                Query Face
             </div>
             <div class="card-body text-center">
                 <img src="{{ query_image }}" class="img-fluid rounded" alt="Query image">
@@ -30,15 +29,15 @@
     <div class="col-md-8">
         <div class="card shadow-sm sketchy-card h-100">
             <div class="card-header">
-                Candidate Matches in Photo Database (Simulated)
+                Candidate Matches (Simulated)
             </div>
             <div class="card-body">
-                <table class="table table-sm align-middle">
+                <table class="table table-sm align-middle table-dark table-striped">
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>Candidate Label</th>
-                            <th>Source Image</th>
+                            <th>Label</th>
+                            <th>Source</th>
                             <th>Match Confidence</th>
                         </tr>
                     </thead>
@@ -57,21 +56,12 @@
                     </tbody>
                 </table>
                 <p class="small text-muted mt-2">
-                    In production, Sketchy will convert model distances into calibrated
-                    confidence scores and pull the actual source images from your
-                    suspect database.
+                    In production, distances from the model will be calibrated into actual confidence scores.
                 </p>
             </div>
         </div>
     </div>
 </div>
 
-<div class="d-flex gap-2">
-    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
-        Back to Dashboard
-    </a>
-    <a href="{{ url_for('index') }}#video-section" class="btn btn-outline-success">
-        Next: Scan CCTV / Video for This Face (Demo)
-    </a>
-</div>
+<a href="{{ url_for('index') }}" class="btn btn-outline-light">Back to Dashboard</a>
 {% endblock %}
