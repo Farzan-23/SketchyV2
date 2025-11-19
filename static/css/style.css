@@ -1,30 +1,188 @@
+/* ---------------------------------------------------
+   Sketchy — Global Styles
+----------------------------------------------------- */
+
 body.sketchy-body {
     min-height: 100vh;
     background: radial-gradient(circle at top left, #1b4332, #081c15);
-    color: #f8f9fa;
+    color: #eafbea;
+    font-family: "Segoe UI", Arial, sans-serif;
 }
 
 .sketchy-navbar {
     background: linear-gradient(90deg, #081c15, #1b4332);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.navbar-brand span {
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+/* ---------------------------------------------------
+   Cards & Containers
+----------------------------------------------------- */
+
 .sketchy-card {
-    background: rgba(3, 26, 20, 0.92);
-    border: 1px solid rgba(163, 190, 140, 0.35);
-    color: #f8f9fa;
+    background: rgba(10, 40, 30, 0.92);
+    border: 1px solid rgba(210, 255, 220, 0.25);
+    color: #eafbea;
+    backdrop-filter: blur(4px);
+}
+
+.sketchy-card .card-header {
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(210, 255, 220, 0.2);
+    font-weight: bold;
+    font-size: 1rem;
+    color: #dafee9;
 }
 
 .sketchy-hero-card {
     background: linear-gradient(135deg, #1b4332, #2d6a4f);
-    color: #f8f9fa;
+    color: #eafbea;
+    border-radius: 1rem;
+    padding: 2rem;
 }
+
+/* ---------------------------------------------------
+   Brighten All Text Inside Cards
+----------------------------------------------------- */
+
+.sketchy-card p,
+.sketchy-card small,
+.sketchy-card .text-muted,
+.sketchy-hero-card p {
+    color: #d7fce3 !important;   /* Light mint green */
+}
+
+.sketchy-card label,
+.sketchy-card li,
+.sketchy-card td,
+.sketchy-card th {
+    color: #f2fff4 !important;   /* White-green tone */
+}
+
+.card-header,
+.card-body {
+    color: #f2fff4 !important;
+}
+
+/* ---------------------------------------------------
+   Forms & Buttons
+----------------------------------------------------- */
+
+.form-control {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(210, 255, 220, 0.3);
+    color: #eafbea;
+}
+
+.form-control:focus {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: #95d5b2;
+    outline: none;
+    box-shadow: 0 0 6px #95d5b2;
+    color: #ffffff;
+}
+
+.btn-primary {
+    background-color: #2d6a4f;
+    border-color: #2d6a4f;
+}
+
+.btn-primary:hover {
+    background-color: #40916c;
+    border-color: #40916c;
+}
+
+.btn-success {
+    background-color: #1b8a5b;
+    border-color: #1b8a5b;
+}
+
+.btn-success:hover {
+    background-color: #2dc97b;
+    border-color: #2dc97b;
+}
+
+.btn-outline-light:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ---------------------------------------------------
+   Alerts & Messages
+----------------------------------------------------- */
 
 .sketchy-alert {
-    background-color: rgba(248, 249, 250, 0.12);
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    color: #eaffea;
+    border-left: 4px solid #95d5b2;
 }
 
+/* ---------------------------------------------------
+   Footer
+----------------------------------------------------- */
+
 .sketchy-footer {
-    background: transparent;
-    border-top: 1px solid rgba(248, 249, 250, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    color: #d7fce3;
     margin-top: 2rem;
+}
+
+/* ---------------------------------------------------
+   Tables
+----------------------------------------------------- */
+
+table {
+    color: #eafbea !important;
+}
+
+.table-dark td,
+.table-dark th {
+    color: #eafbea !important;
+}
+
+/* ---------------------------------------------------
+   File Upload Inputs
+----------------------------------------------------- */
+
+input[type=file] {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #eafbea;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+input[type=file]::file-selector-button {
+    background-color: #2d6a4f;
+    color: #ffffff;
+    border: none;
+    padding: 0.45rem 0.9rem;
+    border-radius: 6px;
+    margin-right: 10px;
+}
+
+input[type=file]::file-selector-button:hover {
+    background-color: #40916c;
+}
+
+/* ---------------------------------------------------
+   Links & Typography
+----------------------------------------------------- */
+
+a {
+    color: #b7fbd8;
+}
+
+a:hover {
+    color: #d9ffe7;
+}
+
+h2, h3, h4, h5 {
+    color: #ffffff;
+}
+
+/* Stronger white text for headings */
+.card-title {
+    color: #ffffff !important;
 }
