@@ -1,80 +1,30 @@
-/* ===============================
-   SKETCHY – FOREST GREEN THEME
-   =============================== */
-
-:root {
-    --forest-green: #0b3d2e;
-    --sea-green: #0f5f4a;
-    --mint-green: #78c2a4;
-    --light-mint: #a4e8c5;
-    --white: #ffffff;
+body.sketchy-body {
+    min-height: 100vh;
+    background: radial-gradient(circle at top left, #1b4332, #081c15);
+    color: #f8f9fa;
 }
 
-/* Background */
-body.sketchy-bg {
-    background: linear-gradient(135deg, #0b3d2e, #0f5f4a);
-    color: var(--white);
-}
-
-/* Navbar */
 .sketchy-navbar {
-    background: var(--forest-green) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    background: linear-gradient(90deg, #081c15, #1b4332);
 }
 
-/* Footer */
-.sketchy-footer {
-    background: var(--forest-green);
-    color: rgba(255,255,255,0.7);
-}
-
-/* Cards */
 .sketchy-card {
-    background: var(--sea-green);
-    color: var(--white);
-    border-radius: 14px;
-    border: 1px solid rgba(255,255,255,0.08);
-    transition: 0.25s ease-in-out;
+    background: rgba(3, 26, 20, 0.92);
+    border: 1px solid rgba(163, 190, 140, 0.35);
+    color: #f8f9fa;
 }
 
-.sketchy-card:hover {
-    border-color: var(--mint-green);
-    transform: translateY(-2px);
+.sketchy-hero-card {
+    background: linear-gradient(135deg, #1b4332, #2d6a4f);
+    color: #f8f9fa;
 }
 
-/* Hero block */
-.sketchy-hero {
-    background: linear-gradient(135deg, #0b3d2e, #119072);
-    color: #e5f7f0;
+.sketchy-alert {
+    background-color: rgba(248, 249, 250, 0.12);
 }
 
-.sketchy-hero p {
-    color: #d0f0e4;
-}
-
-/* Buttons */
-.btn-primary,
-.btn-success {
-    background: var(--mint-green) !important;
-    border: none;
-    color: var(--forest-green) !important;
-}
-
-.btn-primary:hover,
-.btn-success:hover {
-    background: var(--light-mint) !important;
-    transform: scale(1.02);
-}
-
-/* File input */
-input[type="file"] {
-    background: rgba(255,255,255,0.9);
-    border-radius: 6px;
-    padding: 6px;
-}
-
-/* Alerts */
-.alert {
-    border-radius: 10px;
-    opacity: 0.96;
+.sketchy-footer {
+    background: transparent;
+    border-top: 1px solid rgba(248, 249, 250, 0.1);
+    margin-top: 2rem;
 }

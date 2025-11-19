@@ -1,42 +1,42 @@
 {% extends "base.html" %}
+{% block title %}Dashboard | Sketchy{% endblock %}
 
 {% block content %}
 <div class="row mb-4">
     <div class="col">
-        <div class="p-4 mb-3 sketchy-hero shadow-sm rounded-3">
+        <div class="p-4 sketchy-hero-card rounded-3 shadow-sm">
             <h2 class="mb-2">
-                <i class="bi bi-eyeglasses me-2"></i>
+                <i class="bi bi-binoculars me-2"></i>
                 Sketchy – Forensic Face Search Workflow
             </h2>
             <p class="mb-0">
                 Upload a <strong>sketch or photo</strong> of a suspect, then scan your
-                <strong>photo database</strong> and <strong>CCTV footage</strong> for
-                possible matches. This prototype shows the interface and flow;
-                the AI recognition engine is integrated on the backend.
+                <strong>photo database</strong> and <strong>CCTV footage</strong> for possible matches.
+                This prototype shows the interface and flow; the AI recognition engine can be integrated
+                on the backend.
             </p>
         </div>
     </div>
 </div>
 
 <div class="row g-4">
-    <!-- STEP 1 -->
     <div class="col-md-6">
         <div class="card shadow-sm sketchy-card h-100">
+            <div class="card-header d-flex align-items-center">
+                <i class="bi bi-image me-2"></i>
+                <strong>Step 1 – Upload Sketch / Photo (Query Face)</strong>
+            </div>
             <div class="card-body">
-                <h5 class="card-title">
-                    <i class="bi bi-image me-2"></i>
-                    Step 1 – Upload Sketch / Photo (Query Face)
-                </h5>
-                <p class="card-text text-muted">
-                    Upload a <strong>facial sketch</strong> or <strong>photo</strong>.
-                    Sketchy will treat this as the <em>query face</em> to search against:
+                <p class="text-muted small">
+                    Upload a facial sketch or photo. Sketchy will treat this as the
+                    <strong>query face</strong> to search against:
                 </p>
-                <ul class="text-muted small mb-3">
+                <ul class="small text-muted mb-3">
                     <li>Stored suspect / reference photos</li>
                     <li>CCTV or other recorded video streams</li>
                 </ul>
 
-                <form action="{{ url_for('search_image') }}" method="post" enctype="multipart/form-data">
+                <form method="post" action="{{ url_for('search_image') }}" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label for="query_image" class="form-label">Choose Sketch / Photo</label>
                         <input
@@ -56,25 +56,23 @@
         </div>
     </div>
 
-    <!-- STEP 2 -->
     <div class="col-md-6">
         <div class="card shadow-sm sketchy-card h-100">
+            <div class="card-header d-flex align-items-center">
+                <i class="bi bi-camera-reels me-2"></i>
+                <strong>Step 2 – Search for This Face in CCTV / Video</strong>
+            </div>
             <div class="card-body">
-                <h5 class="card-title">
-                    <i class="bi bi-camera-video me-2"></i>
-                    Step 2 – Search for This Face in CCTV / Video
-                </h5>
-                <p class="card-text text-muted">
+                <p class="text-muted small">
                     Once you have a query face, upload <strong>CCTV or video footage</strong>.
-                    Sketchy will scan frames and flag timestamps where the same face
-                    is likely to appear.
+                    Sketchy will (in a full implementation) scan frames and flag timestamps where
+                    the same face is likely to appear.
                 </p>
                 <p class="text-muted small">
-                    In this preview, the system uses simulated output to show how the
-                    results will be presented.
+                    In this preview, the system uses simulated output to show how results would be presented.
                 </p>
 
-                <form action="{{ url_for('search_video') }}" method="post" enctype="multipart/form-data">
+                <form method="post" action="{{ url_for('search_video') }}" enctype="multipart/form-data">
                     <div class="mb-3">
                         <label for="video_file" class="form-label">Choose CCTV / Video File</label>
                         <input
@@ -87,7 +85,7 @@
                         >
                     </div>
                     <button type="submit" class="btn btn-success w-100">
-                        <i class="bi bi-graph-up-arrow me-1"></i> Scan Video for Query Face (Demo)
+                        <i class="bi bi-play-circle me-1"></i> Scan Video for Query Face (Demo)
                     </button>
                 </form>
             </div>

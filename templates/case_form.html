@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block title %}{% if mode == 'edit' %}Edit Case{% else %}New Case{% endif %} | Sketchy{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -37,7 +38,6 @@
                             id="description"
                             name="description"
                             rows="5"
-                            placeholder="Example: Suspect seen near warehouse on 23:40; eyewitness reports; key CCTV cameras to review..."
                         >{{ case.description if case else '' }}</textarea>
                     </div>
 

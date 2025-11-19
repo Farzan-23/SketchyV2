@@ -1,44 +1,41 @@
 {% extends "base.html" %}
+{% block title %}Image Results | Sketchy{% endblock %}
 
 {% block content %}
 <div class="row mb-3">
     <div class="col">
-        <h3 class="mb-1">
-            <i class="bi bi-card-image me-2"></i>
-            Photo Database Search – Results (Demo)
+        <h3>
+            <i class="bi bi-image-alt me-2"></i>Photo Match Results
         </h3>
-        <p class="text-muted">
-            Sketchy has taken your uploaded <strong>sketch/photo</strong> as the query face
-            and is showing simulated matches from a reference <strong>photo database</strong>.
+        <p class="text-muted small mb-0">
+            Demo output showing candidate matches for the uploaded query face.
         </p>
     </div>
 </div>
 
-<div class="row mb-4">
-    <div class="col-md-4 mb-3 mb-md-0">
-        <div class="card shadow-sm sketchy-card">
-            <div class="card-header">
-                Query Face
-            </div>
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card sketchy-card shadow-sm">
+            <div class="card-header">Query Face</div>
             <div class="card-body text-center">
-                <img src="{{ query_image }}" class="img-fluid rounded" alt="Query image">
+                <img src="{{ query_image }}" alt="Query image"
+                     class="img-fluid rounded shadow-sm">
             </div>
         </div>
     </div>
 
     <div class="col-md-8">
-        <div class="card shadow-sm sketchy-card h-100">
-            <div class="card-header">
-                Candidate Matches (Simulated)
-            </div>
+        <div class="card sketchy-card shadow-sm">
+            <div class="card-header">Candidate Matches (Demo)</div>
             <div class="card-body">
-                <table class="table table-sm align-middle table-dark table-striped">
+                {% if results %}
+                <table class="table table-dark table-striped table-sm align-middle mb-0">
                     <thead>
                         <tr>
                             <th>#</th>
                             <th>Label</th>
                             <th>Source</th>
-                            <th>Match Confidence</th>
+                            <th>Similarity Score (lower = closer)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -47,21 +44,16 @@
                             <td>{{ loop.index }}</td>
                             <td>{{ r.label }}</td>
                             <td>{{ r.source }}</td>
-                            <td>
-                                {% set conf = (1 - r.score) * 100 %}
-                                {{ conf | round(1) }}%
-                            </td>
+                            <td>{{ "%.2f"|format(r.score) }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
-                <p class="small text-muted mt-2">
-                    In production, distances from the model will be calibrated into actual confidence scores.
-                </p>
+                {% else %}
+                <p class="text-muted mb-0">No demo results available.</p>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
-
-<a href="{{ url_for('index') }}" class="btn btn-outline-light">Back to Dashboard</a>
 {% endblock %}

@@ -1,36 +1,33 @@
 {% extends "base.html" %}
+{% block title %}Video Results | Sketchy{% endblock %}
 
 {% block content %}
 <div class="row mb-3">
     <div class="col">
-        <h3 class="mb-1">
-            <i class="bi bi-camera-video me-2"></i>
-            CCTV / Video Search – Results (Demo)
+        <h3>
+            <i class="bi bi-camera-reels me-2"></i>CCTV / Video Scan Results
         </h3>
-        <p class="text-muted">
-            This screen simulates how Sketchy will search for the query face across CCTV footage.
-            Each row shows a time where a potential match was detected.
-        </p>
-        <p class="text-muted mb-0">
-            Video analyzed: <strong>{{ video_name }}</strong>
+        <p class="text-muted small mb-0">
+            Demo timeline of when the query face might appear in the uploaded video.
         </p>
     </div>
 </div>
 
-<div class="row mb-4">
+<div class="row">
     <div class="col">
-        <div class="card shadow-sm sketchy-card">
+        <div class="card sketchy-card shadow-sm">
             <div class="card-header">
-                Match Timeline (Simulated)
+                Video: {{ video_name }}
             </div>
             <div class="card-body">
-                <table class="table table-sm align-middle table-dark table-striped">
+                {% if matches %}
+                <table class="table table-dark table-striped table-sm align-middle mb-0">
                     <thead>
                         <tr>
                             <th>#</th>
                             <th>Timestamp</th>
                             <th>Label</th>
-                            <th>Match Confidence</th>
+                            <th>Confidence (lower = closer)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -39,21 +36,16 @@
                             <td>{{ loop.index }}</td>
                             <td>{{ m.time }}</td>
                             <td>{{ m.label }}</td>
-                            <td>
-                                {% set conf = (1 - m.score) * 100 %}
-                                {{ conf | round(1) }}%
-                            </td>
+                            <td>{{ "%.2f"|format(m.score) }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
-                <p class="small text-muted mt-2">
-                    The production system will run frame-by-frame analysis with configurable thresholds.
-                </p>
+                {% else %}
+                <p class="text-muted mb-0">No demo matches available.</p>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
-
-<a href="{{ url_for('index') }}" class="btn btn-outline-light">Back to Dashboard</a>
 {% endblock %}
