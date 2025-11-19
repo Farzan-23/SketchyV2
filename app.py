@@ -1,6 +1,7 @@
 import os
 import sqlite3
 from functools import wraps
+from datetime import datetime
 
 from flask import (
     Flask,
@@ -35,7 +36,7 @@ os.makedirs(VIDEO_UPLOAD_DIR, exist_ok=True)
 ALLOWED_IMAGE_EXTENSIONS = {"jpg", "jpeg", "png"}
 ALLOWED_VIDEO_EXTENSIONS = {"mp4", "avi", "mov", "mkv"}
 
-# SQLite database for users
+# SQLite database for users & cases
 DATABASE = os.path.join(BASE_DIR, "users.db")
 
 
@@ -50,14 +51,13 @@ def get_db():
 
 def init_db():
     """
-    Create users table if it doesn't exist.
-    Columns:
-        id            INTEGER PRIMARY KEY
-        username      TEXT UNIQUE
-        password_hash TEXT
-        is_suspended  0 / 1
+    Create required tables if they don't exist:
+        users  - user accounts + suspension flag
+        cases  - case management (title, description, status, created_by, timestamps)
     """
     conn = get_db()
+
+    # Users table
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS users (
@@ -68,6 +68,23 @@ def init_db():
         );
         """
     )
+
+    # Cases table
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS cases (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            description TEXT,
+            status TEXT NOT NULL DEFAULT 'Open',
+            created_by INTEGER NOT NULL,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY (created_by) REFERENCES users (id)
+        );
+        """
+    )
+
     conn.commit()
     conn.close()
 
@@ -108,6 +125,10 @@ def admin_required(view_func):
             return redirect(url_for("index"))
         return view_func(*args, **kwargs)
     return wrapped_view
+
+
+def is_admin() -> bool:
+    return session.get("username") == "admin"
 
 
 # ---------------------------------------------------------------------
@@ -209,7 +230,7 @@ def logout():
 
 
 # ---------------------------------------------------------------------
-# Admin routes: list, edit, suspend, delete
+# Admin routes: list, edit, suspend, delete users
 # ---------------------------------------------------------------------
 @app.route("/admin/users")
 @admin_required
@@ -230,7 +251,7 @@ def manage_users():
 def edit_user(user_id):
     """
     Edit another user's username and/or reset password.
-    Admin cannot change their own username here to avoid locking themselves out.
+    Admin cannot change their own username to avoid locking themselves out.
     """
     conn = get_db()
     user = conn.execute(
@@ -364,6 +385,199 @@ def delete_user(user_id):
 
     flash(f"User '{user['username']}' has been deleted.", "success")
     return redirect(url_for("manage_users"))
+
+
+# ---------------------------------------------------------------------
+# CASE MANAGEMENT ROUTES
+# ---------------------------------------------------------------------
+@app.route("/cases")
+@login_required
+def list_cases():
+    """
+    List cases.
+    - Admin sees all cases.
+    - Normal users see only the cases they created.
+    """
+    conn = get_db()
+    if is_admin():
+        cases = conn.execute(
+            """
+            SELECT c.*, u.username AS creator_name
+            FROM cases c
+            JOIN users u ON c.created_by = u.id
+            ORDER BY datetime(c.created_at) DESC
+            """
+        ).fetchall()
+    else:
+        cases = conn.execute(
+            """
+            SELECT c.*, u.username AS creator_name
+            FROM cases c
+            JOIN users u ON c.created_by = u.id
+            WHERE c.created_by = ?
+            ORDER BY datetime(c.created_at) DESC
+            """,
+            (session.get("user_id"),),
+        ).fetchall()
+    conn.close()
+    return render_template("cases_list.html", cases=cases)
+
+
+@app.route("/cases/new", methods=["GET", "POST"])
+@login_required
+def create_case():
+    """
+    Create a new case.
+    """
+    if request.method == "POST":
+        title = request.form.get("title", "").strip()
+        description = request.form.get("description", "").strip()
+        status = request.form.get("status", "Open").strip() or "Open"
+
+        if not title:
+            flash("Case title is required.", "warning")
+            return redirect(url_for("create_case"))
+
+        now = datetime.utcnow().isoformat(timespec="seconds")
+        conn = get_db()
+        conn.execute(
+            """
+            INSERT INTO cases (title, description, status, created_by, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (title, description, status, session.get("user_id"), now, now),
+        )
+        conn.commit()
+        conn.close()
+
+        flash("Case created successfully.", "success")
+        return redirect(url_for("list_cases"))
+
+    return render_template("case_form.html", mode="create", case=None)
+
+
+def user_can_access_case(case_row):
+    """
+    Returns True if current user is allowed to access this case.
+    Admin -> always True
+    Normal user -> only if they created it
+    """
+    if is_admin():
+        return True
+    return case_row["created_by"] == session.get("user_id")
+
+
+@app.route("/cases/<int:case_id>")
+@login_required
+def case_detail(case_id):
+    """
+    View details of a case.
+    """
+    conn = get_db()
+    case = conn.execute(
+        """
+        SELECT c.*, u.username AS creator_name
+        FROM cases c
+        JOIN users u ON c.created_by = u.id
+        WHERE c.id = ?
+        """,
+        (case_id,),
+    ).fetchone()
+    conn.close()
+
+    if not case:
+        flash("Case not found.", "warning")
+        return redirect(url_for("list_cases"))
+
+    if not user_can_access_case(case):
+        flash("You are not allowed to view this case.", "danger")
+        return redirect(url_for("list_cases"))
+
+    return render_template("case_detail.html", case=case)
+
+
+@app.route("/cases/<int:case_id>/edit", methods=["GET", "POST"])
+@login_required
+def edit_case(case_id):
+    """
+    Edit an existing case.
+    Admin can edit any case.
+    Normal users can only edit their own cases.
+    """
+    conn = get_db()
+    case = conn.execute(
+        "SELECT * FROM cases WHERE id = ?",
+        (case_id,),
+    ).fetchone()
+
+    if not case:
+        conn.close()
+        flash("Case not found.", "warning")
+        return redirect(url_for("list_cases"))
+
+    if not user_can_access_case(case):
+        conn.close()
+        flash("You are not allowed to edit this case.", "danger")
+        return redirect(url_for("list_cases"))
+
+    if request.method == "POST":
+        title = request.form.get("title", "").strip()
+        description = request.form.get("description", "").strip()
+        status = request.form.get("status", "").strip()
+
+        if not title:
+            flash("Case title is required.", "warning")
+            return redirect(url_for("edit_case", case_id=case_id))
+
+        now = datetime.utcnow().isoformat(timespec="seconds")
+        conn.execute(
+            """
+            UPDATE cases
+            SET title = ?, description = ?, status = ?, updated_at = ?
+            WHERE id = ?
+            """,
+            (title, description, status or "Open", now, case_id),
+        )
+        conn.commit()
+        conn.close()
+
+        flash("Case updated successfully.", "success")
+        return redirect(url_for("case_detail", case_id=case_id))
+
+    conn.close()
+    return render_template("case_form.html", mode="edit", case=case)
+
+
+@app.post("/cases/<int:case_id>/delete")
+@login_required
+def delete_case(case_id):
+    """
+    Delete a case.
+    Admin can delete any case.
+    Normal user can only delete their own case.
+    """
+    conn = get_db()
+    case = conn.execute(
+        "SELECT * FROM cases WHERE id = ?",
+        (case_id,),
+    ).fetchone()
+
+    if not case:
+        conn.close()
+        flash("Case not found.", "warning")
+        return redirect(url_for("list_cases"))
+
+    if not user_can_access_case(case):
+        conn.close()
+        flash("You are not allowed to delete this case.", "danger")
+        return redirect(url_for("list_cases"))
+
+    conn.execute("DELETE FROM cases WHERE id = ?", (case_id,))
+    conn.commit()
+    conn.close()
+
+    flash("Case deleted.", "info")
+    return redirect(url_for("list_cases"))
 
 
 # ---------------------------------------------------------------------

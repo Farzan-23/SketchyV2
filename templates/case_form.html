@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="card shadow sketchy-card">
+            <div class="card-body p-4">
+                <h3 class="card-title mb-3">
+                    {% if mode == 'edit' %}
+                        <i class="bi bi-folder-check me-2"></i>Edit Case
+                    {% else %}
+                        <i class="bi bi-folder-plus me-2"></i>New Case
+                    {% endif %}
+                </h3>
+                <p class="text-muted small">
+                    Record key details for an investigation: suspect description, incident summary,
+                    and current review status.
+                </p>
+
+                <form method="post">
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Case Title</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            id="title"
+                            name="title"
+                            required
+                            value="{{ case.title if case else '' }}"
+                        >
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Case Description</label>
+                        <textarea
+                            class="form-control"
+                            id="description"
+                            name="description"
+                            rows="5"
+                            placeholder="Example: Suspect seen near warehouse on 23:40; eyewitness reports; key CCTV cameras to review..."
+                        >{{ case.description if case else '' }}</textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status">
+                            {% set current_status = case.status if case else 'Open' %}
+                            <option value="Open" {% if current_status == 'Open' %}selected{% endif %}>Open</option>
+                            <option value="Under Review" {% if current_status == 'Under Review' %}selected{% endif %}>Under Review</option>
+                            <option value="Closed" {% if current_status == 'Closed' %}selected{% endif %}>Closed</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check2-circle me-1"></i>
+                        {% if mode == 'edit' %}Save Changes{% else %}Create Case{% endif %}
+                    </button>
+                    <a href="{{ url_for('list_cases') }}" class="btn btn-outline-light ms-2">
+                        Cancel
+                    </a>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col d-flex justify-content-between align-items-center">
+        <div>
+            <h3 class="mb-1">
+                <i class="bi bi-folder2-open me-2"></i>
+                Case: {{ case.title }}
+            </h3>
+            <p class="text-muted mb-0 small">
+                Created by <strong>{{ case.creator_name }}</strong>
+                on {{ case.created_at }} • Last updated {{ case.updated_at }}
+            </p>
+        </div>
+        <div>
+            <a href="{{ url_for('edit_case', case_id=case.id) }}"
+               class="btn btn-primary btn-sm me-2">
+                <i class="bi bi-pencil-square me-1"></i>Edit
+            </a>
+            <form
+                action="{{ url_for('delete_case', case_id=case.id) }}"
+                method="post"
+                class="d-inline"
+                onsubmit="return confirm('Delete this case?');"
+            >
+                <button type="submit" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-trash me-1"></i>Delete
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-8">
+        <div class="card shadow-sm sketchy-card mb-3">
+            <div class="card-header">
+                Case Summary
+            </div>
+            <div class="card-body">
+                {% if case.description %}
+                    <p class="mb-0" style="white-space: pre-wrap;">{{ case.description }}</p>
+                {% else %}
+                    <p class="text-muted mb-0">No detailed description recorded yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm sketchy-card mb-3">
+            <div class="card-header">
+                Status
+            </div>
+            <div class="card-body">
+                {% if case.status == 'Open' %}
+                    <span class="badge bg-success fs-6">Open</span>
+                {% elif case.status == 'Under Review' %}
+                    <span class="badge bg-warning text-dark fs-6">Under Review</span>
+                {% elif case.status == 'Closed' %}
+                    <span class="badge bg-secondary fs-6">Closed</span>
+                {% else %}
+                    <span class="badge bg-light text-dark fs-6">{{ case.status }}</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card shadow-sm sketchy-card">
+            <div class="card-header">
+                Linked to Sketchy Workflow
+            </div>
+            <div class="card-body small text-muted">
+                <p class="mb-1">
+                    Use this case as the central reference point for:
+                </p>
+                <ul class="mb-2">
+                    <li>Uploaded suspect sketches & photos</li>
+                    <li>CCTV footage to be scanned</li>
+                    <li>Notes on likely matches</li>
+                </ul>
+                <p class="mb-0">
+                    In a full build, each <strong>query face</strong> and
+                    <strong>video scan</strong> could be attached directly to this case.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<a href="{{ url_for('list_cases') }}" class="btn btn-outline-light">
+    <i class="bi bi-arrow-left me-1"></i> Back to Cases
+</a>
+{% endblock %}
